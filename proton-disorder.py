@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from Oxygen import Oxygen
 from Link import Link
+import random
 
 
 def parse_csv(csv_file):
@@ -71,6 +72,16 @@ def neighbour_list(ice, box_dim):
                     print("Too many neighbours")
     
     return ice, links
+
+def init_hydrogens(ice, links):
+    """
+    """
+    for link in links:
+        x = random.random()
+        if (x < 0.5):
+            pass
+
+
                     
 
 ice, box_dim = parse_csv('input/s2-hydrate.csv')

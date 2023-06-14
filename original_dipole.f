@@ -199,7 +199,7 @@ CONTAINS
     REAL :: z
     INTEGER :: i
 
-    ! put 1 hydrogen on each link
+    ! put 1 hydrogen on each link, and 'give' it to one of the oxygens
     DO i = 1, 2*nmols
        CALL RANDOM_NUMBER (z)
        IF(z < 0.5) THEN

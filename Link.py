@@ -1,3 +1,5 @@
+from HalfLink import HalfLink
+
 class Link:
     """
     """

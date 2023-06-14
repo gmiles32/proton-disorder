@@ -10,3 +10,6 @@ That's the basic gist of what I need to do. As for an approach, I need to have a
 I initially wanted to have the link object just be associated with the oxygen atoms. However, I think that I need a list of links, such that when I go to shake I can just iterate through the list rather than have to go through all the oxygen atoms and the associated link. 
 
 I think that each link need to keep track of the oxygen atoms associated with it. I can do that through an index of the oxygen atom. So then I don't really need oxygens to know about the links, but I do need them to know how many links they have associated to them. I can just use a counter in this case, something like `nneighbours`. I think that should work nicely.
+
+### init_hydrogens
+So I've had a bit of a speed bump. In this function, we are trying to place a hydrogen in each link, and have that hydrogen be associated to one of the oxygens within that link. The way that this is done in the original code is with these objects called half links, where each oxygen has a half link and they contain information like how many bonds that oxygen had and whether the proton within that bond is associated with it. It's just confusing why this was done. I'm trying to come up with a way to sort of simplify this set up, or at least reduce the number of objects being used. 
