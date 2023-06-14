@@ -20,7 +20,7 @@ class Oxygen:
           to this oxygen.
         """
         self.coord = []
-        self.links = []
+        self.nneighbours = 0
         self.nbonds = 0
 
     def set_coord(self, new_coord):
@@ -37,10 +37,7 @@ class Oxygen:
         else:
             self.coord = new_coord
     
-    def add_link(self, new_link):
+    def add_neighbour(self):
         """
         """
-        if len(self.links) > 4:
-            pass
-        else:
-            self.links.append(new_link)
+        self.nneighbours += 1

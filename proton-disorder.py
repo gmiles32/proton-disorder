@@ -42,20 +42,46 @@ def neighbour_list(ice, box_dim):
     rcut = 3.
     rcut2 = rcut**2
 
+    links = []
+
+    # Create 3x3 matrix with system box coordinates
     h = np.zeros((3,3))
     for i in range(len(box_dim)):
         h[i,i] = box_dim[i]
-
     hinv = np.linalg.inv(h)
 
     for i in range(len(ice)):
         for j in range(i+1,len(ice)):
+            # Calculate the distance between the oxygens, taking into
+            # account PBC
             dist = ice[i].coord - ice[j].coord
-
-
+            s = np.matmul(hinv, dist)
+            s = s - np.rint(s)
+            dist_out = np.matmul(h, s)
+            # Calculate if the corrected distance is within the cutoff radius
+            if np.sum(dist_out**2) <= rcut2:
+                if ice[i].nneighbours < 4 and ice[j].nneighbours < 4:
+                    # Add link to list
+                    new_link = Link(i,j,True)
+                    links.append(new_link)
+                    # Update the number of neighbours an oxygen has
+                    ice[i].add_neighbour()
+                    ice[j].add_neighbour()
+                else:
+                    print("Too many neighbours")
+    
+    return ice, links
+                    
 
 ice, box_dim = parse_csv('input/s2-hydrate.csv')
-neighbour_list(ice, box_dim)
+ice, links = neighbour_list(ice, box_dim)
+
+max_neighbours = 0
+for oxygen in ice:
+    if oxygen.nneighbours > max_neighbours:
+        max_neighbours = oxygen.nneighbours
+
+print(max_neighbours)
 # def add_hydrogens():
 
 
