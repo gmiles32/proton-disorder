@@ -160,7 +160,7 @@ CONTAINS
     ALLOCATE (link(2*nmols))
 
     ! calculate all distances between the atoms
-    near(:) = 0 
+    near(:) = 0 ! matrix counting the number of nearby neighors
     ilink = 0
     DO i=1,nmols-1
        DO j=i+1,nmols 
@@ -169,9 +169,9 @@ CONTAINS
           s = s - NINT ( s )
           rout = MATMUL ( box % hmat, s )
           IF (SUM(rout*rout) <= rcut2) THEN 
-             near(i) = near(i) + 1 
+             near(i) = near(i) + 1 ! update the number of neighbors in list
              near(j) = near(j) + 1 
-             IF(near(i) <= 4 .AND. near(j) <= 4) THEN
+             IF(near(i) <= 4 .AND. near(j) <= 4) THEN ! if not 4 neighbors, then update the oxygen neighbors
                 oxygen(i) % part(near(i)) % neighbour = j
                 oxygen(j) % part(near(j)) % neighbour = i
                 ilink = ilink + 1
