@@ -21,6 +21,7 @@ class Oxygen:
         """
         self.coord = []
         self.nneighbours = 0
+        self.links_index = []
         self.nbonds = 0
 
     def set_coord(self, new_coord):
@@ -37,7 +38,17 @@ class Oxygen:
         else:
             self.coord = new_coord
     
-    def add_neighbour(self):
+    def add_link(self, index):
         """
         """
+        self.add_link_index(index)
         self.nneighbours += 1
+
+    def add_bond(self):
+        self.nbonds += 1
+
+    def remove_bond(self):
+        self.nbonds -= 1
+    
+    def add_link_index(self, new_link_index):
+        self.links_index.append(new_link_index)

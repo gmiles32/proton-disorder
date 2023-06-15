@@ -63,11 +63,11 @@ def neighbour_list(ice, box_dim):
             if np.sum(dist_out**2) <= rcut2:
                 if ice[i].nneighbours < 4 and ice[j].nneighbours < 4:
                     # Add link to list
-                    new_link = Link(i,j,True)
+                    new_link = Link(i,j)
                     links.append(new_link)
-                    # Update the number of neighbours an oxygen has
-                    ice[i].add_neighbour()
-                    ice[j].add_neighbour()
+                    # Update the number of neighbours an oxygen has, record link index
+                    ice[i].add_link(len(links) - 1)
+                    ice[j].add_link(len(links) - 1)
                 else:
                     print("Too many neighbours")
     
@@ -78,21 +78,56 @@ def init_hydrogens(ice, links):
     """
     for link in links:
         x = random.random()
+        # Assign hydrogen to one oxygen of the other randomly
+        # Does not matter is the oxygen already has 2 hydrogens
         if (x < 0.5):
-            pass
+            link.make_oxy1_bond()
+            ice[link.oxy1].add_bond()
+        else:
+            link.make_oxy2_bond()
+            ice[link.oxy2].add_bond()
 
+    return ice, links
 
-                    
+def shake_bonds(nshakes, ice, links):
+    """
+    """
+    for i in range(nshakes):
+        z = random.random()
+        index = int(len(links) * z)
+        link = links[index]
+        link.swap_bond()
+        # If this oxygen just gained a bond, add a bond and remove one from the neightbour
+        if link.oxy1_bond:
+            ice[link.oxy1].add_bond()
+            ice[link.oxy2].remove_bond()
+        else:
+            ice[link.oxy2].add_bond()
+            ice[link.oxy1].remove_bond()
+    
+    return ice, links
+
+def adjust_bonds(ice, links):
+    """
+    """
+    pass      
 
 ice, box_dim = parse_csv('input/s2-hydrate.csv')
 ice, links = neighbour_list(ice, box_dim)
+ice, links = init_hydrogens(ice, links)
+ice, links = shake_bonds(50, ice, links)
 
-max_neighbours = 0
-for oxygen in ice:
-    if oxygen.nneighbours > max_neighbours:
-        max_neighbours = oxygen.nneighbours
+print("Link example:\nOxy 1: {}\nOxy 2: {}\nOxy 1 bond: {}\nOxy 2 bond: {}".format(
+    links[0].oxy1, links[0].oxy2, links[0].oxy1_bond, links[0].oxy2_bond
+))
 
-print(max_neighbours)
+# Debug
+# max_neighbours = 0
+# for oxygen in ice:
+#     if oxygen.nneighbours > max_neighbours:
+#         max_neighbours = oxygen.nneighbours
+
+# print(max_neighbours)
 # def add_hydrogens():
 
 

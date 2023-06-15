@@ -12,4 +12,11 @@ I initially wanted to have the link object just be associated with the oxygen at
 I think that each link need to keep track of the oxygen atoms associated with it. I can do that through an index of the oxygen atom. So then I don't really need oxygens to know about the links, but I do need them to know how many links they have associated to them. I can just use a counter in this case, something like `nneighbours`. I think that should work nicely.
 
 ### init_hydrogens
-So I've had a bit of a speed bump. In this function, we are trying to place a hydrogen in each link, and have that hydrogen be associated to one of the oxygens within that link. The way that this is done in the original code is with these objects called half links, where each oxygen has a half link and they contain information like how many bonds that oxygen had and whether the proton within that bond is associated with it. It's just confusing why this was done. I'm trying to come up with a way to sort of simplify this set up, or at least reduce the number of objects being used. 
+So I've had a bit of a speed bump. In this function, we are trying to place a hydrogen in each link, and have that hydrogen be associated to one of the oxygens within that link. The way that this is done in the original code is with these objects called half links, where each oxygen has a half link and they contain information like how many bonds that oxygen had and whether the proton within that bond is associated with it. It's just confusing why this was done. I'm trying to come up with a way to sort of simplify this set up, or at least reduce the number of objects being use.
+
+_Update 6/15/23_
+
+I played around with it a little more, and I decided to not use a `HalfLinks` class. Instead, my Links class tracks both oxygens, and then whether the bond is on one oxygen or the other. In addition, each oxygen tracks each of the links that it is associated with via index. So there are two main lists that I have - `ice` and `links`. Ice contains all of the oxygen objects, links contains all the `link` objects. All the `links` objects contain indexes that relate to the `ice` array, and vice versa. This is my workaround for not having pointers in python. This whole set up would be a lot easier to implement if I had pointers for everything.
+
+### shake_bonds
+This method was relatively easy to implement. It helped that once I had set up this relation between the two arrays, I could update the two quite readily. So yeah - it does what it needs to do. 
