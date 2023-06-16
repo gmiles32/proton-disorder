@@ -52,3 +52,9 @@ class Oxygen:
     
     def add_link_index(self, new_link_index):
         self.links_index.append(new_link_index)
+
+    def set_nbonds(self, new_nbonds):
+        self.nbonds = new_nbonds
+
+    def get_neighbour(self, index):
+        return self.ne

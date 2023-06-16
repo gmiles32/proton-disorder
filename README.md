@@ -20,3 +20,6 @@ I played around with it a little more, and I decided to not use a `HalfLinks` cl
 
 ### shake_bonds
 This method was relatively easy to implement. It helped that once I had set up this relation between the two arrays, I could update the two quite readily. So yeah - it does what it needs to do. 
+
+### get_dipole
+I'm a little stumped on this, but that is okay. My oxygens need to know the location of the hydrogens associated with it. However, the oxygen objects that I have do not know anything about the hydrogens. All they know are neighbours, through link objects. So, what I can do is parse through the links, and see which ones have this oxygen as having a bond. I then need to get the coordinates of the neighbouring oxygen, because that will allow me to get the direction of the hydrogen. Once I have the direction for both 
