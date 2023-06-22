@@ -23,3 +23,24 @@ This method was relatively easy to implement. It helped that once I had set up t
 
 ### get_dipole
 I'm a little stumped on this, but that is okay. My oxygens need to know the location of the hydrogens associated with it. However, the oxygen objects that I have do not know anything about the hydrogens. All they know are neighbours, through link objects. So, what I can do is parse through the links, and see which ones have this oxygen as having a bond. I then need to get the coordinates of the neighbouring oxygen, because that will allow me to get the direction of the hydrogen. Once I have the direction for both 
+
+# Attempt v2
+So I took a moment, stepped away and decided to approach things a little differently. I was making individual oxygen and links objects, and having them point to each other via indexes in arrays. But I think the fact that I'm using objects is making things more complicated than it needs to be. So instead, I'm going to use a 2D array (which granted doesn't seem like it would be less complicated). The reasoning here is that it should allow me to to access things easier, without the added complexity of classes.
+
+## Array structure
+Here is the main layout of the 2D array:
+```
+[
+    [[x,y,z],[x,y,z],...], # Coordintes for oxygen atoms
+    [
+        {1:True,2:False,...},
+        {0:False,2:True,...},
+    ] # The links for each oxygen
+] 
+```
+
+The first part of the array is an array of 3-tuples that contain the oxygen coordinates. This is parsed in by the xyz/csv file.
+
+The second part is really where the magic happens. The second array is filled with dictionaries, each of which has four entries for each link associated with oxygen. The original idea was to use tuples, but since tuples are immutable in python, that makes it quite difficult to operate on.
+
+One problem - instantiating hydrogens. The link objects are related to each other. So I need to make sure that I can index them randomly, but that if I change one I must change the other.
