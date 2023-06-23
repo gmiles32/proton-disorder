@@ -7,6 +7,12 @@ OXY_COORD_INDEX = 0
 LINKS_INDEX = 1
 OXY_LINKS_INDEX = 2
 
+# Atoms indeces for clarity
+RESNUM_INDEX = 0
+ATOM_COORD_INDEX = 1
+ATOM_NAME_INDEX = 2
+PDB_NAME_INDEX = 3
+
 # Def general water constants (for TIP4P)
 R_OH = 0.9572 # Angstroms
 ANG_HOH = 104.52 * (np.pi/180.) # in radians
@@ -287,66 +293,72 @@ def virtual_coord(x1, x2, x3):
     a = b = 0.128012065
     return x1 + a * (x2 -x1) + b * (x3 - x1)
 
-def put_hydrogens(ice,h,hinv):
+def put_hydrogens(ice,h,hinv,tip4p):
     """
-    """
-    cosal2 = np.cos(ANG_HOH/2.)
-    sinal2 = np.sin(ANG_HOH/2.)
-
-    coordinates = ice[OXY_COORD_INDEX]
-    ice_links = ice[LINKS_INDEX]
-    oxy_links = ice[OXY_LINKS_INDEX]
-
-    atoms = []
-    resnum = 1
-    for oxy1_index in range(len(coordinates)):
-        bonds = get_bonds(ice, oxy1_index)
-        poles = []
-        h_coords = []
-        for oxy2_index in bonds:
-            r = coordinates[oxy2_index] - coordinates[oxy1_index]
-            s = np.matmul(hinv,r)
-            s = s - np.rint(s)
-            r = np.matmul(h,s)
-            norm = np.linalg.norm(r)
-            unit_r = r / norm
-            h_coord = coordinates[oxy1_index] + R_OH * unit_r
-            h_coords.append(h_coord)
-
-        # u = poles[0] + poles[1]
-        # u = u / np.sqrt(np.sum(u**2))
-        # v = poles[0] - poles[1]
-        # v = v / np.sqrt(np.sum(v**2))
-        # h_coords.append(coordinates[oxy1_indexz] + R_OH * (cosal2 * u + sinal2 * v))
-        # h_coords.append(coordinates[oxy1_index] + R_OH * (cosal2 * u - sinal2 * v))
-
-        # Add oxygen
-        atoms.append((resnum,coordinates[oxy1_index],'O','OW'))
-        # Add hydrogens
-        atoms.append((resnum,h_coords[0],'H','HW1'))
-        atoms.append((resnum,h_coords[1],'H','HW2'))
-        # Add virtual point
-        atoms.append((resnum,virtual_coord(coordinates[oxy1_index],h_coords[0],h_coords[1]),'M','MW'))
-
-        resnum += 1
-
-    return atoms
-
-def output(ice,h,hinv,fileformat='xyz',fileprefix='output/ice'):
-    """
-    Generates properly formatted ice structure from ice array.
+    Generates the coordinates for hydrogens in ice structure. Additionally will
+    generate virtual point for TIP4P water. 
 
     Input
     - ice: ice array
     - h: 3x3 matrix with system dimensions
     - hinv: inverse matrix of h
+    - tip4p: flag to generate virtual point for tip4p water. Defaults to True
+             (You should be using TIP4P water dunce)
+
+    Output: atoms array of 4-tuples ordered as (residue #, [x,y,z], atom name, pdb name)
+    """
+
+    coordinates = ice[OXY_COORD_INDEX]
+    atoms = []
+    resnum = 1
+
+    for oxy1_index in range(len(coordinates)):
+        bonds = get_bonds(ice, oxy1_index)
+        h_coords = []
+        for oxy2_index in bonds:
+            # PBC correction
+            r = coordinates[oxy2_index] - coordinates[oxy1_index]
+            s = np.matmul(hinv,r)
+            s = s - np.rint(s)
+            r = np.matmul(h,s)
+            # Generate coordinate for hydrogen atom
+            norm = np.linalg.norm(r)
+            unit_r = r / norm
+            h_coord = coordinates[oxy1_index] + R_OH * unit_r
+            h_coords.append(h_coord)
+
+        # Atom tuples are ordered as (residue #, [x,y,z], atom name, pdb name)
+        # Add oxygen
+        atoms.append((resnum,coordinates[oxy1_index],'O','OW'))
+        # Add hydrogens
+        atoms.append((resnum,h_coords[0],'H','HW1'))
+        atoms.append((resnum,h_coords[1],'H','HW2'))
+        
+        if tip4p:
+            # Add virtual point
+            atoms.append((resnum,virtual_coord(coordinates[oxy1_index],h_coords[0],h_coords[1]),'M','MW'))
+
+        resnum += 1
+
+    return atoms
+
+def output(ice,fileformat='xyz',fileprefix='output/ice',tip4p=True):
+    """
+    Generates properly formatted ice structure from ice array.
+
+    Input
+    - ice: ice array
+    - tip4p: flag to generate virtual point for tip4p water. Defaults to True
+             (You should be using TIP4P you dunce)
     - fileformat: the file format of the output file, defaults to 'xyz'
     - fileprefix: target directory/filename for output, defaults to 'output/ice'
 
     Output: formatted output file in specified directory
     """
-    atoms = put_hydrogens(ice,h,hinv)
-    # Write unit cell pdb
+
+    h,hinv = gen_matrices(ice)
+    atoms = put_hydrogens(ice,h,hinv,tip4p)
+
     filename = fileprefix + "." + fileformat
     f = open(filename, "w")
 
@@ -356,12 +368,12 @@ def output(ice,h,hinv,fileformat='xyz',fileprefix='output/ice'):
         for i in range(len(atoms)):
             atom = atoms[i]
             id = str(i)
-            element = atom[3]
+            element = atom[PDB_NAME_INDEX]
             resname = 'HOH'
-            resnum = atom[0]
-            x = atom[1][0]
-            y = atom[1][1]
-            z = atom[1][2]
+            resnum = atom[RESNUM_INDEX]
+            x = atom[ATOM_COORD_INDEX][0]
+            y = atom[ATOM_COORD_INDEX][1]
+            z = atom[ATOM_COORD_INDEX][2]
 
             # Create PDB entry
             line = "{:6s}{:5d} {:^4s} {:3s}  {:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}\n".format(
@@ -371,23 +383,19 @@ def output(ice,h,hinv,fileformat='xyz',fileprefix='output/ice'):
     elif 'xyz' in fileformat:
         f.write("{}\n\n".format(len(atoms)))
         for atom in atoms:
-            line = "{}  {}  {}  {}\n".format(atom[2],atom[1][0],atom[1][1],atom[1][2])
+            line = "{}  {}  {}  {}\n".format(atom[ATOM_NAME_INDEX],
+                                             atom[ATOM_COORD_INDEX][0],
+                                             atom[ATOM_COORD_INDEX][1],
+                                             atom[ATOM_COORD_INDEX][2])
             f.write(line)
 
     f.close()
-    print("Output written")
-
-# ice, box_dim = parse_csv('input/s2-hydrate.csv')
-# h, hinv = gen_matrices(box_dim)
-# ice = neighbour_list(ice,h,hinv)
-# ice = init_hydrogens(ice)
-# ice = shake_bonds(ice)
-# ice = adjust_bonds(ice)
-# dipole = get_dipole(ice,h,hinv)
+    print("Output file " + filename + "written")
 
 if __name__ == "__main__":
     dipole_target = 0.1
 
+    # Parse file, generate first configuration, test if it's good
     ice, box_dim = parse_csv('input/s2-hydrate.csv')
     h, hinv = gen_matrices(box_dim)
     ice = neighbour_list(ice,h,hinv)
@@ -395,6 +403,7 @@ if __name__ == "__main__":
     ice = adjust_bonds(ice)
     dipole = get_dipole(ice,h,hinv)
 
+    # Optimize structure
     nround = 0
     while True:
         ice_old = ice
@@ -415,4 +424,4 @@ if __name__ == "__main__":
             
         nround += 1
 
-    output(ice,h,hinv)
+    output(ice)
