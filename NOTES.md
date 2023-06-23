@@ -50,8 +50,8 @@ The original 2D structure did not work as I had hoped. I still had an issue wher
 
 ```
 [
-    [[x,y,x],[x,y,z],...], # Coordinates of oxygen atoms 
-    {(0,1):0,(0,3):1,...}, # Dictionary of links
+    [[x,y,x],[x,y,z],...],   # Coordinates of oxygen atoms 
+    {(0,1):0,(0,3):1,...},   # Dictionary of links
     [[(0,1),(0,3),...],...], # The list of oxygen links
 ]
 ```

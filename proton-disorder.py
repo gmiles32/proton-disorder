@@ -251,7 +251,7 @@ def get_dipole(ice,h,hinv):
         bonds = get_bonds(ice, oxy1_index)
         poles = []
         for oxy2_index in bonds:
-            dist = coordinates[oxy1_index] - coordinates[oxy2_index]
+            dist = coordinates[oxy2_index] - coordinates[oxy1_index]
             s = np.matmul(hinv, dist)
             s = s - np.rint(s)
             dist = np.matmul(h,s)
@@ -274,6 +274,19 @@ def gen_matrices(box_dim):
 
     return h, hinv
 
+def virtual_coord(x1, x2, x3):
+    """
+    Returns the virtual coordinate (or 4th point) for a TIP4P water using the following alogrithm:
+    x4 = x1 + a*(x2-x1) + b*(x3-x1)
+    where a,b = 0.128012065
+
+    Refer to OPLSAA TIP4P itp file in GROMACS for more information
+
+    Author: Gabe Miles
+    """
+    a = b = 0.128012065
+    return x1 + a * (x2 -x1) + b * (x3 - x1)
+
 def put_hydrogens(ice,h,hinv):
     """
     """
@@ -289,56 +302,77 @@ def put_hydrogens(ice,h,hinv):
     for oxy1_index in range(len(coordinates)):
         bonds = get_bonds(ice, oxy1_index)
         poles = []
+        h_coords = []
         for oxy2_index in bonds:
-            dist = coordinates[oxy1_index] - coordinates[oxy2_index]
-            s = np.matmul(hinv,dist)
+            r = coordinates[oxy2_index] - coordinates[oxy1_index]
+            s = np.matmul(hinv,r)
             s = s - np.rint(s)
-            dist = np.matmul(h,s)
-            poles.append(dist)
-        
-        u = poles[0] + poles[1]
-        u = u / np.sqrt(np.sum(u**2))
-        v = poles[0] - poles[1]
-        v = v / np.sqrt(np.sum(v**2))
-        coord_h1 = coordinates[oxy1_index] + R_OH * (cosal2 * u + sinal2 * v)
-        coord_h2 = coordinates[oxy1_index] + R_OH * (cosal2 * u - sinal2 * v)
+            r = np.matmul(h,s)
+            norm = np.linalg.norm(r)
+            unit_r = r / norm
+            h_coord = coordinates[oxy1_index] + R_OH * unit_r
+            h_coords.append(h_coord)
+
+        # u = poles[0] + poles[1]
+        # u = u / np.sqrt(np.sum(u**2))
+        # v = poles[0] - poles[1]
+        # v = v / np.sqrt(np.sum(v**2))
+        # h_coords.append(coordinates[oxy1_indexz] + R_OH * (cosal2 * u + sinal2 * v))
+        # h_coords.append(coordinates[oxy1_index] + R_OH * (cosal2 * u - sinal2 * v))
 
         # Add oxygen
         atoms.append((resnum,coordinates[oxy1_index],'O','OW'))
         # Add hydrogens
-        atoms.append((resnum,coord_h1,'H','HW1'))
-        atoms.append((resnum,coord_h2,'H','HW2'))
+        atoms.append((resnum,h_coords[0],'H','HW1'))
+        atoms.append((resnum,h_coords[1],'H','HW2'))
         # Add virtual point
-        atoms.append((resnum,coordinates[oxy1_index],'M','MW'))
-    
+        atoms.append((resnum,virtual_coord(coordinates[oxy1_index],h_coords[0],h_coords[1]),'M','MW'))
+
+        resnum += 1
+
     return atoms
 
-
-def output(ice,h,hinv,fileformat='xyz',filename='ice'):
+def output(ice,h,hinv,fileformat='xyz',fileprefix='output/ice'):
     """
+    Generates properly formatted ice structure from ice array.
+
+    Input
+    - ice: ice array
+    - h: 3x3 matrix with system dimensions
+    - hinv: inverse matrix of h
+    - fileformat: the file format of the output file, defaults to 'xyz'
+    - fileprefix: target directory/filename for output, defaults to 'output/ice'
+
+    Output: formatted output file in specified directory
     """
     atoms = put_hydrogens(ice,h,hinv)
     # Write unit cell pdb
+    filename = fileprefix + "." + fileformat
+    f = open(filename, "w")
 
-    f = open("output/ice.xyz", "w")
+    if 'pdb' in fileformat:
+        f.write("CRYST1   {:2.3f}   {:2.3f}   {:2.3f}  90.00  90.00  90.00 P 1           1\n".format(
+            h[0][0],h[1][1],h[2][2]))
+        for i in range(len(atoms)):
+            atom = atoms[i]
+            id = str(i)
+            element = atom[3]
+            resname = 'HOH'
+            resnum = atom[0]
+            x = atom[1][0]
+            y = atom[1][1]
+            z = atom[1][2]
 
-    # f.write("CRYST1   17.310   17.310   17.310  90.00  90.00  90.00 P 1           1\n")
-    f.write("{}\n\n".format(len(atoms)))
-    for atom in atoms:
-        # #Collect PDB variables
-        # id = str(i)
-        # atom = thf_line['ELEMENT'].iloc[i]
-        # resname = thf_line['MOL'].iloc[i]
-        # resnum = thf_line['RESIDUE_NUM'].iloc[i]
-        # x = thf_line['X'].iloc[i]
-        # y = thf_line['Y'].iloc[i]
-        # z = thf_line['Z'].iloc[i]
+            # Create PDB entry
+            line = "{:6s}{:5d} {:^4s} {:3s}  {:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}\n".format(
+                "ATOM", i+1, element, resname, resnum, x, y, z, 0., 0.)
+            f.write(line)
 
-        # # Create PDB entry
-        # line = "{:6s}{:5d} {:^4s} {:3s}  {:4d}    {:8.3f}{:8.3f}{:8.3f}{:6.2f}{:6.2f}\n".format(
-        #     "ATOM", i+1, atom, resname, resnum, x, y, z, 0., 0.)
-        line = "{},{},{},{}\n".format(atom[2],atom[1][0],atom[1][1],atom[1][2])
-        f.write(line)
+    elif 'xyz' in fileformat:
+        f.write("{}\n\n".format(len(atoms)))
+        for atom in atoms:
+            line = "{}  {}  {}  {}\n".format(atom[2],atom[1][0],atom[1][1],atom[1][2])
+            f.write(line)
 
     f.close()
     print("Output written")
