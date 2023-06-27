@@ -1,5 +1,4 @@
-from src.constants import *
-from src.mc import gen_matrices
+from proton_disorder.src.constants import *
 import random
 import pandas as pd
 import numpy as np
@@ -16,7 +15,7 @@ def parser():
     parser.add_argument('-i','--input-file',type=str,help='Name of input xyz file')
     parser.add_argument('-o','--output-file',type=str,help='Name for output file')
     parser.add_argument('-d','--dipole-target',type=float,default=0.1,help='Target dipole for hydrate')
-    parser.add_argument('-n','--nshakes',type=int,default=50,help='Number of shakes to do per round')
+    parser.add_argument('-n','--nshakes',type=int,default=-1,help='Number of shakes to do per round')
     parser.add_argument('-t','--tip3p', action='store_true',default=False,help='Use TIP3P (Not recommended)')
 
     return parser
@@ -73,15 +72,18 @@ def neighbour_list(ice,h,hinv):
     # Create a dictionary of links
     ice_links = {}
     oxy_bonds = []
+    nbonds = []
+
     for i in range(len(ice[OXY_COORD_INDEX])):
         oxy_bonds.append([])
+        nbonds.append(0)
 
     for i in range(len(ice[OXY_COORD_INDEX])):
         # oxy_links = []
-        for j in range(len(ice[OXY_COORD_INDEX])):
+        for j in range(i+1,len(ice[OXY_COORD_INDEX])):
             # Check if the looking at the same oxygen atom
-            if i == j:
-                continue
+            # if i == j:
+            #     continue
 
             # Calculate the distance between the oxygens, taking into
             # account PBC
@@ -97,11 +99,12 @@ def neighbour_list(ice,h,hinv):
                     # Add link to list
                     # oxy_links.append((j,False))
                 # Order tuple (small,large) to test for duplications
-                if i < j:
-                    link_tuple = (i,j)
-                else:
-                    link_tuple = (j,i)
-                
+                # if i < j:
+                #     link_tuple = (i,j)
+                # else:
+                #     link_tuple = (j,i)
+
+                link_tuple = (i,j)
                 # assign to a nonesense value
                 if link_tuple not in ice_links.keys():
                     ice_links[link_tuple] = -1
@@ -116,6 +119,7 @@ def neighbour_list(ice,h,hinv):
 
     ice.append(ice_links)
     ice.append(oxy_bonds)
+    ice.append(nbonds)
 
     return ice
 
@@ -123,14 +127,17 @@ def init_hydrogens(ice):
     """
     """
     ice_links = ice[LINKS_INDEX]
+    nbonds = ice[NBONDS_INDEX]
     for key in ice_links.keys():
         # Get a random oxygens links
         z = random.random()
 
         if (z < 0.5):
             ice_links[key] = 0
+            nbonds[key[0]] += 1
         else:
             ice_links[key] = 1
+            nbonds[key[1]] += 1
 
     return ice
 

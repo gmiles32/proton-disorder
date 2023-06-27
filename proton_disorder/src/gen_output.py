@@ -1,5 +1,5 @@
-from src.constants import *
-from src.mc import get_bonds
+from proton_disorder.src.constants import *
+from proton_disorder.src.mc import get_bonds
 import numpy as np
 import os
 
@@ -63,7 +63,7 @@ def put_hydrogens(ice,h,hinv,tip4p):
 
     return atoms
 
-def output(ice,h,hinv,filename='output/ice.xyz',tip4p=True):
+def output(ice,h,hinv,filename='output/ice.xyz',tip4p=True,chk=False):
     """
     Generates properly formatted ice structure from ice array.
 
@@ -81,7 +81,10 @@ def output(ice,h,hinv,filename='output/ice.xyz',tip4p=True):
     filename_parts = os.path.splitext(filename)
     fileformat = filename_parts[len(filename_parts) - 1]
 
-    f = open(filename, "w")
+    if chk:
+        f = open(filename + ".chk", "w")
+    else:
+        f = open(filename, "w")
 
     if 'pdb' in fileformat:
         f.write("CRYST1   {:2.3f}   {:2.3f}   {:2.3f}  90.00  90.00  90.00 P 1           1\n".format(

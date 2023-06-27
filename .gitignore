@@ -2,3 +2,6 @@ __pycache__
 proton-disorder-test.ipynb
 proton-disorder.code-workspace
 output
+build
+proton_disorder.egg-info
+extra

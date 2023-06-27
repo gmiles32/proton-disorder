@@ -1,0 +1,26 @@
+[build-system]
+requires = [
+    "setuptools>=67.8",
+    "numpy>=1.24",
+    "pandas>=1.5",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "proton_disorder"
+authors = [
+    {name = "Gabe Miles", email = "gabrielmiles@u.boisestate.edu"}
+]
+description = "Algorithm for making proton disordered ice strucutures"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {file = "LICENSE.md"}
+version ="0.1"
+dependencies = [
+    "setuptools>=67.8",
+    "numpy>=1.24",
+    "pandas>=1.5",
+]
+
+[tool.setuptools.packages]
+find = {}

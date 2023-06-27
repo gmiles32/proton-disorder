@@ -4,6 +4,7 @@
 OXY_COORD_INDEX = 0
 LINKS_INDEX = 1
 OXY_LINKS_INDEX = 2
+NBONDS_INDEX = 3
 
 # Atoms indeces for clarity
 RESNUM_INDEX = 0

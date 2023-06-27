@@ -1,4 +1,4 @@
-from src.constants import *
+from proton_disorder.src.constants import *
 import random
 import numpy as np
 
@@ -25,21 +25,26 @@ def adjust_bonds(ice):
     """
     """
     ice_links = ice[LINKS_INDEX]
-    oxy_links = ice[OXY_LINKS_INDEX]
+    nbonds = ice[NBONDS_INDEX]
 
-    keys = list(ice_links.keys())
+    tm_links= ice_links.copy()
     while True:
+
+        success, tm_links = two_bonds(ice)
+        if success:
+            break
+        
+        keys = list(tm_links.keys())
         z = random.random()
         index = int(len(keys)*z)
         if index >= len(keys):
             continue
-
         link = keys[index]
         oxy1_index = link[0]
         oxy2_index = link[1]
 
-        oxy1_nbonds = count_bonds(ice, oxy1_index)
-        oxy2_nbonds = count_bonds(ice, oxy2_index)
+        oxy1_nbonds = nbonds[oxy1_index]
+        oxy2_nbonds = nbonds[oxy2_index]
 
         # Get the original difference between nbonds (should be 0 if they are both 2)
         # However, there is a possibility to have 3 and 3 or 1 and 1 - not perfect
@@ -65,24 +70,39 @@ def adjust_bonds(ice):
             swap_bond(ice, link)
 
         # Check if all oxygens have two bonds
-        if two_bonds(ice):
-            break
-
+        # if two_bonds(ice):
+        #     break
     return ice
 
 def two_bonds(ice):
     """
     """
-    val = True
+    success = True
+    nbonds = ice[NBONDS_INDEX]
+    ice_links = ice[LINKS_INDEX]
     oxy_links = ice[OXY_LINKS_INDEX]
+    # new_tm_indeces = []
+    tm_links = {}
 
-    for oxy_index in range(len(oxy_links)):
-        nbonds = count_bonds(ice, oxy_index)
-        if nbonds > 2:
-            val = False
-            break
+    # for i in tm_indeces:
+    #     n = nbonds[i]
+    #     if n != 2:
+    #         success = False
+    #         new_tm_indeces.append(i)
+    #         for link in oxy_links[i]:
+    #             new_tm_links[link] = ice_links[link]
 
-    return val
+    keys = list(ice_links.keys())
+    for link in keys:
+        if nbonds[link[0]] == 2 and nbonds[link[1]] == 2:
+            continue
+        else:
+            success = False
+            tm_links[link] = ice_links[link]
+
+        
+            
+    return success, tm_links
 
 def count_bonds(ice, oxy_index):
     """
@@ -102,11 +122,16 @@ def count_bonds(ice, oxy_index):
 
 def swap_bond(ice, link):
     ice_links = ice[LINKS_INDEX]
+    nbonds = ice[NBONDS_INDEX]
 
     if ice_links[link] == 0:
         ice_links[link] = 1
+        nbonds[link[0]] -= 1
+        nbonds[link[1]] += 1
     else:
         ice_links[link] = 0
+        nbonds[link[0]] += 1
+        nbonds[link[1]] -= 1
 
 def get_bonds(ice, oxy_index):
     """
