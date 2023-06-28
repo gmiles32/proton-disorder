@@ -11,6 +11,7 @@ $ conda activate proton-disorder
 ```
 
 ### Venv
+_Instructions have not been confirmed_
 ``` bash
 $ python3 -m venv proton-disorder
 $ source /path/to/venv/bin/activate

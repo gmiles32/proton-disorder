@@ -5,6 +5,9 @@ if __name__ == "__main__":
 
     parser = parser()
     args = parser.parse_args()
+    # debug
+    # args = parser.parse_args(['--input','input/tip4p_hydrate.csv','--output','output/ice.xyz'])
+
     # Check arguments
     if args.input_file == '':
         print("Please enter a valid input file")
@@ -36,7 +39,7 @@ if __name__ == "__main__":
     print("Starting dipole moment is {}".format(dipole))
 
     if args.nshakes == -1:
-        nshakes = int(len(ice[OXY_COORD_INDEX]) / 10)
+        nshakes = int((len(ice[LINKS_INDEX]) + len(ice[OXY_COORD_INDEX])) / 10)
         print("Nshakes is {}".format(nshakes))
     else: 
         nshakes = args.nshakes

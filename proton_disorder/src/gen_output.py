@@ -82,9 +82,9 @@ def output(ice,h,hinv,filename='output/ice.xyz',tip4p=True,chk=False):
     fileformat = filename_parts[len(filename_parts) - 1]
 
     if chk:
-        f = open(filename + ".chk", "w")
-    else:
-        f = open(filename, "w")
+        filename = filename + ".chk"
+
+    f = open(filename, "w")
 
     if 'pdb' in fileformat:
         f.write("CRYST1   {:2.3f}   {:2.3f}   {:2.3f}  90.00  90.00  90.00 P 1           1\n".format(
@@ -120,7 +120,7 @@ def output(ice,h,hinv,filename='output/ice.xyz',tip4p=True,chk=False):
                                           atom[ATOM_COORD_INDEX][0],
                                           atom[ATOM_COORD_INDEX][1],
                                           atom[ATOM_COORD_INDEX][2])
-        f.write(line)
+            f.write(line)
     else:
         raise Exception("Output file format '{}' not supported".format(fileformat))
 
