@@ -4,6 +4,9 @@ import numpy as np
 
 def shake_bonds(ice, nshakes=20):
     """
+    First step in monte carlo algorithm. This function will randomly choose a link,
+    then swap the hydrogen bond from one oxygen to another. This 'mixes' the hydrogen
+    configuration.
     """
     # Get links dictionary
     ice_links = ice[LINKS_INDEX]
@@ -23,6 +26,15 @@ def shake_bonds(ice, nshakes=20):
 
 def adjust_bonds(ice):
     """
+    After initializing and shaking hydrogens at random, the each oxygen will have a range
+    of hydrogens between 0-4. This will correct that by adjusting at random the bonds such that
+    all oxygens will have two bonds to hydrogens. 
+
+    This is the slowest function in the entire codebase. Because of the randomness of choosing
+    a link, it previously would contiue to miss links that had the incorrect number of hydrogens,
+    meaning that it would take forever with large systems. I corrected this by focusing the random
+    selection of links on the indeces that do not have the right number of hydrogens. This is not 
+    a purely random approach, but it saves significantly on computational time and complexity.
     """
     ice_links = ice[LINKS_INDEX]
     nbonds = ice[NBONDS_INDEX]
@@ -47,11 +59,7 @@ def adjust_bonds(ice):
         oxy2_nbonds = nbonds[oxy2_index]
 
         # Get the original difference between nbonds (should be 0 if they are both 2)
-        # However, there is a possibility to have 3 and 3 or 1 and 1 - not perfect
         diff_old = np.abs(oxy1_nbonds - oxy2_nbonds)
-        # if oxy1_nbonds == 2 and oxy2_nbonds == 2:
-        #     pass
-        # else:
         # If the bond belongs to oxy1, swap it
         # Otherwise, it belongs to oxy2
         if ice_links[link] == 0:
@@ -60,37 +68,25 @@ def adjust_bonds(ice):
         else:
             oxy2_nbonds -= 1
             oxy1_nbonds += 1
-            # link.swap_bond()
-            # ice[link.oxy1].set_nbonds(oxy1_nbonds)
-            # ice[link.oxy2].set_nbonds(oxy2_nbonds)
         
         diff_new = np.abs(oxy1_nbonds - oxy2_nbonds)
 
         if diff_new <= diff_old:
             swap_bond(ice, link)
 
-        # Check if all oxygens have two bonds
-        # if two_bonds(ice):
-        #     break
     return ice
 
 def two_bonds(ice):
     """
+    This function iterates through the ice and confirms that each oxygen has two
+    hydrogens bonded to it. If it finds an oxygen with not two hydrogens bonded to it,
+    it will flag the run as a failure, and record all the indeces that still do not have
+    the correct number of hydrogens.
     """
     success = True
     nbonds = ice[NBONDS_INDEX]
     ice_links = ice[LINKS_INDEX]
-    oxy_links = ice[OXY_LINKS_INDEX]
-    # new_tm_indeces = []
     tm_links = {}
-
-    # for i in tm_indeces:
-    #     n = nbonds[i]
-    #     if n != 2:
-    #         success = False
-    #         new_tm_indeces.append(i)
-    #         for link in oxy_links[i]:
-    #             new_tm_links[link] = ice_links[link]
 
     keys = list(ice_links.keys())
     for link in keys:
@@ -100,12 +96,13 @@ def two_bonds(ice):
             success = False
             tm_links[link] = ice_links[link]
 
-        
-            
     return success, tm_links
 
 def count_bonds(ice, oxy_index):
     """
+    This function will intially count all the bonds that each oxygen has. This
+    is only run once, and then the nbonds parameter is stored in the ice array and 
+    kept up to date.
     """
     ice_links = ice[LINKS_INDEX]
     oxy_links = ice[OXY_LINKS_INDEX]
@@ -121,6 +118,10 @@ def count_bonds(ice, oxy_index):
     return nbonds
 
 def swap_bond(ice, link):
+    """
+    This function swaps the hydrogen bond between two oxygens in a link, and then 
+    updates the number of bonds each of those oxygens has.
+    """
     ice_links = ice[LINKS_INDEX]
     nbonds = ice[NBONDS_INDEX]
 
@@ -151,6 +152,10 @@ def get_bonds(ice, oxy_index):
 
 def get_dipole(ice,h,hinv):
     """
+    Calculates the dipole moment of the ice based on the coordinates of the oxygen atom and
+    the coordinate of the oxygen atoms with which is is bonded with and owns the hydrogen in said
+    bond. To calculate the dipole moment, only the direction of the hydrogen bonds is necessary, 
+    not the actual position of the hydrogens. 
     """
     coordinates = ice[OXY_COORD_INDEX]
 
@@ -170,14 +175,3 @@ def get_dipole(ice,h,hinv):
         dipole = dipole + u
 
     return np.sqrt(np.sum(dipole**2))
-
-def gen_matrices(box_dim):
-    """
-    """
-    # Create 3x3 matrix with system box coordinates
-    h = np.zeros((3,3))
-    for i in range(len(box_dim)):
-        h[i,i] = box_dim[i]
-    hinv = np.linalg.inv(h)
-
-    return h, hinv

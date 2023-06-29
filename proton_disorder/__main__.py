@@ -5,7 +5,6 @@ if __name__ == "__main__":
 
     parser = parser()
     args = parser.parse_args()
-    # debug
     # args = parser.parse_args(['--input','input/tip4p_hydrate.csv','--output','output/ice.xyz'])
 
     # Check arguments
