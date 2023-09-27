@@ -1,5 +1,17 @@
 # Proton Disorder
 
+## Background
+Ice structures obtained via X-ray Crystallography studies can only parse out the position of the oxygen atoms in the structure. Therefore, it is necessary to come up with a method for finding the position of the hydrogen atoms in the crystal structure, such that you have a water crystal.
+
+The position of the hydrogens can be found using some basic rules:
+1) Each oxygen atom will have 4 neighboring oxygen atoms. The 2 hydrogens for each oygen will point at another oxygen.
+2) If you have a 'link' between two oxygens, only one hydrogen can reside in that link.
+3) The dipole moment for the entire structure should be ~0.
+
+To accomplish this, `proton-disorder` will parse a x-ray crystallography structure with oxygen atom positions, find the 'links' between each oxygen pair, and then place a hydrogen in each one of these links. It will then make sure that one of the oxygens 'owns' this hydrogen, such that each oxygen has two hydrogens associated with it.
+
+`proton-disorder` will then follow a Monte-Carlo algorithm to move the position of the hydrogens around an oxygen, adjust the hydrogens again so that every oxygen has two hydrogens, and then calculate the dipole moment of the ice. If the dipole moment is lower than the previous iteration, it will keep that structure and keep shaking the hydrogen bonding until the dipole moment is beneath the threshold.
+
 ## Installation
 
 First, create a virtual python environment using `conda` or `venv`
